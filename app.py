@@ -94,21 +94,16 @@ def execute_actor(client: ApifyClient, reel_url: str) -> List[Dict[str, Any]]:
         logging.error(str(exc))
         raise ApifyExecutionException("Failed to execute Apify actor.")
 
-    # --- FIX: ROBUST RUN VALIDATION ---
+    # --- THE ACTUAL FIX ---
     default_dataset_id: Optional[str] = None
 
-    # Safely pull the ID whether Apify returns a dict, an object, or a JSON string
-    if isinstance(run, dict):
-        default_dataset_id = run.get("defaultDatasetId")
+    # Newer versions of apify-client use pythonic snake_case (default_dataset_id)
+    if hasattr(run, "default_dataset_id"):
+        default_dataset_id = run.default_dataset_id
     elif hasattr(run, "defaultDatasetId"):
         default_dataset_id = run.defaultDatasetId
-    elif hasattr(run, "get"):
-        default_dataset_id = run.get("defaultDatasetId")
-    elif isinstance(run, str):
-        try:
-            default_dataset_id = json.loads(run).get("defaultDatasetId")
-        except Exception:
-            pass
+    elif isinstance(run, dict):
+        default_dataset_id = run.get("default_dataset_id") or run.get("defaultDatasetId")
 
     if not default_dataset_id:
         logging.error(f"Apify returned an unrecognized run structure: {type(run)}")
@@ -124,10 +119,7 @@ def execute_actor(client: ApifyClient, reel_url: str) -> List[Dict[str, Any]]:
         logging.error(str(exc))
         raise DatasetValidationException("Failed to retrieve dataset items.")
 
-    # --- FIX: ROBUST ITEMS EXTRACTION ---
     items = []
-    
-    # Safely pull the items list regardless of response type
     if isinstance(dataset_items_response, dict):
         items = dataset_items_response.get("items", [])
     elif hasattr(dataset_items_response, "items"):
@@ -141,7 +133,6 @@ def execute_actor(client: ApifyClient, reel_url: str) -> List[Dict[str, Any]]:
     logging.info(f"Dataset returned {len(items)} item(s).")
 
     return items
-
 
 def extract_reel_data(items: List[Dict[str, Any]]) -> Dict[str, Any]:
     first_item: Dict[str, Any] = items[0]
