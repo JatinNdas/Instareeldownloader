@@ -1,5 +1,0 @@
-Flask
-flask-cors
-apify-client
-gunicorn
-Werkzeug
