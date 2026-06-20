@@ -94,11 +94,24 @@ def execute_actor(client: ApifyClient, reel_url: str) -> List[Dict[str, Any]]:
         logging.error(str(exc))
         raise ApifyExecutionException("Failed to execute Apify actor.")
 
-    if not isinstance(run, dict):
-        raise DatasetValidationException("Invalid run response structure.")
+    # --- FIX: ROBUST RUN VALIDATION ---
+    default_dataset_id: Optional[str] = None
 
-    default_dataset_id: Optional[str] = run.get("defaultDatasetId")
+    # Safely pull the ID whether Apify returns a dict, an object, or a JSON string
+    if isinstance(run, dict):
+        default_dataset_id = run.get("defaultDatasetId")
+    elif hasattr(run, "defaultDatasetId"):
+        default_dataset_id = run.defaultDatasetId
+    elif hasattr(run, "get"):
+        default_dataset_id = run.get("defaultDatasetId")
+    elif isinstance(run, str):
+        try:
+            default_dataset_id = json.loads(run).get("defaultDatasetId")
+        except Exception:
+            pass
+
     if not default_dataset_id:
+        logging.error(f"Apify returned an unrecognized run structure: {type(run)}")
         raise DatasetValidationException("Missing defaultDatasetId in run response.")
 
     logging.info(f"Actor run completed. Dataset ID: {default_dataset_id}")
@@ -111,15 +124,18 @@ def execute_actor(client: ApifyClient, reel_url: str) -> List[Dict[str, Any]]:
         logging.error(str(exc))
         raise DatasetValidationException("Failed to retrieve dataset items.")
 
-    if not hasattr(dataset_items_response, "items"):
-        raise DatasetValidationException("Dataset response missing 'items' attribute.")
+    # --- FIX: ROBUST ITEMS EXTRACTION ---
+    items = []
+    
+    # Safely pull the items list regardless of response type
+    if isinstance(dataset_items_response, dict):
+        items = dataset_items_response.get("items", [])
+    elif hasattr(dataset_items_response, "items"):
+        items = dataset_items_response.items
+    elif isinstance(dataset_items_response, list):
+        items = dataset_items_response
 
-    items = dataset_items_response.items
-
-    if not isinstance(items, list):
-        raise DatasetValidationException("Dataset items are not in expected list format.")
-
-    if len(items) == 0:
+    if not isinstance(items, list) or len(items) == 0:
         raise DataExtractionException("Dataset returned empty results.")
 
     logging.info(f"Dataset returned {len(items)} item(s).")
