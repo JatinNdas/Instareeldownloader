@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Instagram Reel Downloader — Aura Edition</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+:root {
+    --bg-dark: #050816;
+    --neon-pink: #ff2e88;
+    --neon-blue: #00f0ff;
+    --neon-purple: #9b5cff;
+    --glass: rgba(255,255,255,0.05);
+    --border: rgba(255,255,255,0.12);
+    --success: #00ff9d;
+    --danger: #ff4d6d;
+    --text-main: #ffffff;
+    --text-muted: #9aa4c7;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: "Poppins", "Segoe UI", sans-serif;
+    background: radial-gradient(circle at 30% 30%, #101630, var(--bg-dark) 70%);
+    color: var(--text-main);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Animated aurora background */
+body::before,
+body::after {
+    content: "";
+    position: fixed;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.6;
+    z-index: -1;
+    animation: moveAurora 12s infinite alternate ease-in-out;
+}
+
+body::before {
+    background: var(--neon-pink);
+    top: -200px;
+    left: -200px;
+}
+
+body::after {
+    background: var(--neon-blue);
+    bottom: -200px;
+    right: -200px;
+    animation-delay: 4s;
+}
+
+@keyframes moveAurora {
+    from { transform: translate(0,0) scale(1); }
+    to { transform: translate(150px,120px) scale(1.3); }
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 70px 20px;
+}
+
+.panel {
+    width: 100%;
+    max-width: 950px;
+    background: var(--glass);
+    backdrop-filter: blur(40px);
+    border: 1px solid var(--border);
+    border-radius: 30px;
+    padding: 60px;
+    box-shadow: 0 0 80px rgba(0,240,255,0.15);
+    animation: fadeIn 1s ease forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(50px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.title {
+    text-align: center;
+    margin-bottom: 45px;
+}
+
+.title h1 {
+    font-size: 38px;
+    letter-spacing: 1px;
+    background: linear-gradient(90deg, var(--neon-pink), var(--neon-blue), var(--neon-purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.title p {
+    margin-top: 12px;
+    font-size: 15px;
+    color: var(--text-muted);
+}
+
+/* Input Section */
+.form-row {
+    display: flex;
+    gap: 18px;
+    margin-bottom: 30px;
+}
+
+.form-row input {
+    flex: 1;
+    padding: 18px;
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.06);
+    color: white;
+    font-size: 15px;
+    transition: 0.3s;
+}
+
+.form-row input:focus {
+    border-color: var(--neon-blue);
+    box-shadow: 0 0 0 3px rgba(0,240,255,0.3);
+    outline: none;
+}
+
+.btn-download {
+    padding: 18px 32px;
+    border-radius: 18px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
+    color: white;
+    transition: 0.3s;
+}
+
+.btn-download:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(255,46,136,0.5);
+}
+
+/* Loader */
+.loader {
+    display: none;
+    margin: 30px auto;
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    border: 6px solid rgba(255,255,255,0.2);
+    border-top: 6px solid var(--neon-blue);
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* Error */
+.alert {
+    display: none;
+    padding: 16px;
+    border-radius: 16px;
+    margin-bottom: 25px;
+    background: rgba(255,77,109,0.15);
+    border: 1px solid rgba(255,77,109,0.4);
+    animation: pulseError 0.5s ease;
+}
+
+@keyframes pulseError {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+/* Result */
+.result-section {
+    display: none;
+    margin-top: 35px;
+    animation: fadeIn 0.6s ease forwards;
+}
+
+.user-badge {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+    font-size: 13px;
+    margin-bottom: 20px;
+}
+
+video {
+    width: 100%;
+    border-radius: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 30px 70px rgba(0,0,0,0.7);
+}
+
+.caption-box {
+    padding: 18px;
+    border-radius: 18px;
+    background: rgba(0,0,0,0.5);
+    max-height: 150px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.stats {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.stat-box {
+    flex: 1;
+    text-align: center;
+    padding: 16px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.06);
+}
+
+.btn-mp4 {
+    display: inline-block;
+    padding: 16px 26px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--success), #00c17a);
+    color: black;
+    font-weight: 600;
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.btn-mp4:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 20px 40px rgba(0,255,157,0.4);
+}
+
+.footer {
+    text-align: center;
+    margin-top: 60px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+<div class="panel">
+
+<div class="title">
+<h1>Aura Reel Downloader</h1>
+<p>Powered by JatXJnLabs• Premium Neon Interface</p>
+</div>
+
+<div id="errorBox" class="alert"></div>
+
+<div class="form-row">
+<input type="text" id="urlInput" placeholder="Enter Instagram Reel URL">
+<button class="btn-download" id="downloadBtn">Fetch Reel</button>
+</div>
+
+<div id="loader" class="loader"></div>
+
+<div id="resultBox" class="result-section">
+<div id="creatorBadge" class="user-badge"></div>
+<video id="videoPlayer" controls></video>
+<div id="captionBox" class="caption-box"></div>
+<div class="stats">
+<div id="likesBox" class="stat-box"></div>
+<div id="commentsBox" class="stat-box"></div>
+</div>
+<a id="downloadLink" class="btn-mp4" target="_blank">Download MP4</a>
+</div>
+
+</div>
+</div>
+
+<div class="footer">© 2026 Aura Instagram Downloader V2</div>
+
+<script>
+const urlInput=document.getElementById("urlInput");
+const downloadBtn=document.getElementById("downloadBtn");
+const loader=document.getElementById("loader");
+const errorBox=document.getElementById("errorBox");
+const resultBox=document.getElementById("resultBox");
+const creatorBadge=document.getElementById("creatorBadge");
+const videoPlayer=document.getElementById("videoPlayer");
+const captionBox=document.getElementById("captionBox");
+const likesBox=document.getElementById("likesBox");
+const commentsBox=document.getElementById("commentsBox");
+const downloadLink=document.getElementById("downloadLink");
+
+function showLoader(){ loader.style.display="block"; }
+function hideLoader(){ loader.style.display="none"; }
+function showError(m){ errorBox.textContent=m; errorBox.style.display="block"; }
+function hideError(){ errorBox.style.display="none"; }
+function reset(){ resultBox.style.display="none"; videoPlayer.pause(); videoPlayer.removeAttribute("src"); }
+
+function showResult(data){
+creatorBadge.textContent="@"+(data.owner_username||"unknown");
+videoPlayer.src=data.video_url;
+captionBox.textContent=data.caption||"";
+likesBox.textContent="Likes: "+Number(data.likes||0).toLocaleString();
+commentsBox.textContent="Comments: "+Number(data.comments||0).toLocaleString();
+downloadLink.href=data.video_url;
+resultBox.style.display="block";
+}
+
+async function handle(){
+const url=urlInput.value.trim();
+hideError(); reset();
+if(!url){ showError("Please enter a valid URL"); return; }
+showLoader();
+try{
+const r=await fetch("/download",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})});
+const d=await r.json();
+hideLoader();
+if(!r.ok||d.status!=="success"){ showError(d.message||"Download failed"); return; }
+showResult(d.data);
+}catch{
+hideLoader();
+showError("Network or server error occurred.");
+}
+}
+
+downloadBtn.onclick=handle;
+urlInput.onkeypress=e=>{ if(e.key==="Enter") handle(); };
+</script>
+
+</body>
+</html>
